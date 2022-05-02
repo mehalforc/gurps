@@ -50,6 +50,7 @@ export default class GurpsActiveEffect extends ActiveEffect {
    */
   static _preCreate(_effect, data, _options, _userId) {
     if (data.duration && !data.duration.combat && game.combat) data.duration.combat = game.combats?.active?.id
+
   }
 
   /**
@@ -217,34 +218,34 @@ export default class GurpsActiveEffect extends ActiveEffect {
       }
     }
 
-    // if (!!this.endCondition) {
-    //   let action = parselink(this.endCondition)
+     if (!!this.endCondition) {
+       let action = parselink(this.endCondition)
 
-    //   if (!!action.action) {
-    //     if (action.action.type === 'modifier') {
-    //       ui.notifications.warn(
-    //         `${i18n(
-    //           'GURPS.effectBadEndCondition',
-    //           'End Condition is not a skill or attribute test: '
-    //         )} '[${endCondition}]'`
-    //       )
-    //       return false
-    //     }
+       if (!!action.action) {
+         if (action.action.type === 'modifier') {
+           ui.notifications.warn(
+             `${i18n(
+               'GURPS.effectBadEndCondition',
+               'End Condition is not a skill or attribute test: '
+             )} '[${endCondition}]'`
+           )
+           return false
+         }
 
-    //     return await GURPS.performAction(action.action, this.parent, {
-    //       shiftKey: false,
-    //       ctrlKey: false,
-    //       data: {},
-    //     })
-    //   } // Looks like a /roll OtF, but didn't parse as one
-    //   else
-    //     ui.notifications.warn(
-    //       `${i18n(
-    //         'GURPS.effectBadEndCondition',
-    //         'End Condition is not a skill or attribute test: '
-    //       )} '[${endCondition}]'`
-    //     )
-    // }
+         return await GURPS.performAction(action.action, this.parent, {
+           shiftKey: false,
+           ctrlKey: false,
+           data: {},
+         })
+       } // Looks like a /roll OtF, but didn't parse as one
+       else
+         ui.notifications.warn(
+           `${i18n(
+             'GURPS.effectBadEndCondition',
+             'End Condition is not a skill or attribute test: '
+           )} '[${endCondition}]'`
+         )
+     }
 
     return false
   }
