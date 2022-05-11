@@ -1100,6 +1100,7 @@ active-effects-list .section h3 {
   grid-template-columns: 1fr min-content min-content;
 }
 
+.effect-change .expand-contract,
 .move-mode-editor .expand-contract,
 .splitdr-editor .expand-contract {
   transition: all 1s;
@@ -1111,6 +1112,7 @@ active-effects-list .section h3 {
   box-shadow: inset 0px 2px 3px 0 grey;
 }
 
+.effect-change .expand-contract.contracted,
 .move-mode-editor .expand-contract.contracted,
 .splitdr-editor .expand-contract.contracted {
   height: 0;
