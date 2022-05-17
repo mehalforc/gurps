@@ -15,7 +15,15 @@
           readonly
           value='{{data.label}}'
         />
-        <input type='checkbox' name='disabled' value='{{data.disabled}}' {{checked data.disabled}} />
+        <input
+          class='effect-control'
+          data-action='disable'
+          data-effect-id='{{id}}'
+          type='checkbox'
+          name='disabled'
+          value='{{not data.disabled}}'
+          {{checked (not data.disabled)}}
+        />
         <div class='vertical-center'>
           <a
             class='effect-control'

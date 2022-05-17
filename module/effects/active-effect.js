@@ -49,8 +49,9 @@ export default class GurpsActiveEffect extends ActiveEffect {
    * @param {*} _userId
    */
   static _preCreate(_effect, data, _options, _userId) {
-    if (data.duration && !data.duration.combat && game.combat) data.duration.combat = game.combats?.active?.id
-
+    if (getProperty(data, 'flags.gurps.effect.endCondition'))
+      setProperty(data, 'duration.otf', getProperty(data, 'flags.gurps.effect.endCondition'))
+    // if (data.duration && !data.duration.combat && game.combat) data.duration.combat = game.combats?.active?.id
   }
 
   /**
@@ -60,7 +61,7 @@ export default class GurpsActiveEffect extends ActiveEffect {
    * @param {*} _userId
    */
   static async _create(effect, _data, _userId) {
-    if (effect.getFlag('gurps', 'requiresConfig') === true) {
+    if (effect.getFlag('gurps', 'effect.requiresConfig') === true) {
       let dialog = new ActiveEffectConfig(effect)
       await dialog.render(true)
     }
@@ -138,11 +139,11 @@ export default class GurpsActiveEffect extends ActiveEffect {
   }
 
   get endCondition() {
-    return this.getFlag('gurps', 'endCondition')
+    return this.getFlag('gurps', 'effect.endCondition')
   }
 
   set endCondition(otf) {
-    this.setFlag('gurps', 'endCondition', otf)
+    this.setFlag('gurps', 'effect.endCondition', otf)
     if (!!otf) {
       this.setFlag('core', 'statusId', `${this.name}-endCondition`)
     }
@@ -209,44 +210,30 @@ export default class GurpsActiveEffect extends ActiveEffect {
     })
   }
 
-  // TODO Any ActiveEffect with a status.core.statusId is by default a temporary effect and will be added as an icon to the token.
+  // TODO Any ActiveEffect with a flags.core.statusId is by default a temporary effect and will be added as an icon to the token.
 
   async isExpired() {
-    if (this.duration && !!this.duration.duration) {
-      if (this.duration.remaining <= 1) {
-        return true
-      }
+    if (getProperty(this, 'duration.duration') && getProperty(this, 'duration.remaining') <= 1) return true
+
+    if (!!this.endCondition) {
+      let action = parselink(this.endCondition)
+
+      if (getProperty(action, 'type') !== 'modifier')
+        return await GURPS.performAction(action.action, this.parent, {
+          shiftKey: false,
+          ctrlKey: false,
+          data: {},
+        })
+      else return this._badEndCondition(this.endCondition)
     }
 
-     if (!!this.endCondition) {
-       let action = parselink(this.endCondition)
+    return false
+  }
 
-       if (!!action.action) {
-         if (action.action.type === 'modifier') {
-           ui.notifications.warn(
-             `${i18n(
-               'GURPS.effectBadEndCondition',
-               'End Condition is not a skill or attribute test: '
-             )} '[${endCondition}]'`
-           )
-           return false
-         }
-
-         return await GURPS.performAction(action.action, this.parent, {
-           shiftKey: false,
-           ctrlKey: false,
-           data: {},
-         })
-       } // Looks like a /roll OtF, but didn't parse as one
-       else
-         ui.notifications.warn(
-           `${i18n(
-             'GURPS.effectBadEndCondition',
-             'End Condition is not a skill or attribute test: '
-           )} '[${endCondition}]'`
-         )
-     }
-
+  _badEndCondition(endCondition) {
+    ui.notifications.warn(
+      `${i18n('GURPS.effectBadEndCondition', 'End Condition is not a skill or attribute test: ')} '[${endCondition}]'`
+    )
     return false
   }
 }

@@ -58,6 +58,9 @@ export default class GurpsActiveEffectListSheet extends Application {
         return this.render(true)
       case 'edit':
         return effect.sheet.render(true, { parentWindow: this })
+      case 'disable':
+        await effect.update({disabled: !effect.data.disabled})
+        return this.render(true)
     }
   }
 }
