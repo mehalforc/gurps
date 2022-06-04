@@ -1,20 +1,37 @@
 'use strict'
 
+import { SYSTEM_NAME } from '../../lib/miscellaneous-settings.js'
 import { parselink } from '../../lib/parselink.js'
 import { i18n, i18n_f } from '../../lib/utilities.js'
+
+const ACTIVE_EFFECT_AUTOREMOVE = 'AE-autoremove'
 
 export default class GurpsActiveEffect extends ActiveEffect {
   static init() {
     CONFIG.ActiveEffect.documentClass = GurpsActiveEffect
 
-    Hooks.on('preCreateActiveEffect', GurpsActiveEffect._preCreate)
-    Hooks.on('createActiveEffect', GurpsActiveEffect._create)
-    Hooks.on('applyActiveEffect', GurpsActiveEffect._apply)
-    Hooks.on('updateActiveEffect', GurpsActiveEffect._update)
-    Hooks.on('deleteActiveEffect', GurpsActiveEffect._delete)
-    Hooks.on('updateCombat', GurpsActiveEffect._updateCombat)
+    // Keep track of the last version number
+    game.settings.register(SYSTEM_NAME, ACTIVE_EFFECT_AUTOREMOVE, {
+      name: i18n('GURPS.settingEffectAutoremove', 'Active Effects: Auto-remove'),
+      hint: i18n(
+        'GURPS.settingHintEffectAutoremove',
+        'If true, expired Active Effects will automatically be removed from the token.'
+      ),
+      scope: 'world',
+      config: true,
+      type: Boolean,
+      default: false,
+      onChange: value => console.log(`Active Effect autoremove : ${value}`),
+    })
 
     Hooks.once('ready', function () {
+      Hooks.on('preCreateActiveEffect', GurpsActiveEffect._preCreate)
+      Hooks.on('createActiveEffect', GurpsActiveEffect._create)
+      Hooks.on('applyActiveEffect', GurpsActiveEffect._apply)
+      Hooks.on('updateActiveEffect', GurpsActiveEffect._update)
+      Hooks.on('deleteActiveEffect', GurpsActiveEffect._delete)
+      Hooks.on('updateCombat', GurpsActiveEffect._updateCombat)
+
       const oldDuration = Object.getOwnPropertyDescriptor(ActiveEffect.prototype, 'duration')
 
       Object.defineProperty(ActiveEffect.prototype, 'duration', {
@@ -61,9 +78,8 @@ export default class GurpsActiveEffect extends ActiveEffect {
    * @param {*} _userId
    */
   static async _create(effect, _data, _userId) {
-    if (effect.getFlag('gurps', 'effect.requiresConfig') === true) {
-      let dialog = new ActiveEffectConfig(effect)
-      await dialog.render(true)
+    if (this.gurpsData?.requiresConfig === true) {
+      await effect.sheet.render(true)
     }
   }
 
@@ -118,13 +134,23 @@ export default class GurpsActiveEffect extends ActiveEffect {
       // go through all effects, removing those that have expired
       if (token && token.actor) {
         for (const effect of token.actor.effects) {
-          if (await effect.isExpired())
+          if (await effect.isExpired()) {
             ui.notifications.info(
               `${i18n('GURPS.effectExpired', 'Effect has expired: ')} '[${i18n(effect.data.label)}]'`
             )
+            if (
+              GurpsActiveEffect.autoremove
+              // game.settings.get(SYSTEM_NAME, ACTIVE_EFFECT_AUTOREMOVE)
+            )
+              effect.delete()
+          }
         }
       }
     }
+  }
+
+  static get autoremove() {
+    return game.settings.get(SYSTEM_NAME, ACTIVE_EFFECT_AUTOREMOVE)
   }
 
   /**
@@ -139,14 +165,24 @@ export default class GurpsActiveEffect extends ActiveEffect {
   }
 
   get endCondition() {
-    return this.getFlag('gurps', 'effect.endCondition')
+    return this.gurpsData?.endCondition
   }
 
   set endCondition(otf) {
-    this.setFlag('gurps', 'effect.endCondition', otf)
+    let effectFlags = this.gurpsData ?? {}
+    effectFlags.endCondition = otf
+    gurpsData = effectFlags
     if (!!otf) {
       this.setFlag('core', 'statusId', `${this.name}-endCondition`)
     }
+  }
+
+  get gurpsData() {
+    return this.getFlag('gurps', 'effect')
+  }
+
+  set gurpsData(data) {
+    this.setFlag('gurps', 'effect', data)
   }
 
   get terminateActions() {

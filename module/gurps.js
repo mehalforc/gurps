@@ -71,7 +71,7 @@ import { multiplyDice } from './utilities/damage-utils.js'
 import GurpsWiring from './gurps-wiring.js'
 import { gurpslink } from './utilities/gurpslink.js'
 
-let GURPS = undefined
+let GURPS = window.GURPS ?? undefined
 
 if (!window.GURPS) {
   GURPS = {}

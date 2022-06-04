@@ -14,6 +14,7 @@ export default class GurpsActiveEffectConfig extends ActiveEffectConfig {
   /** @inheritdoc */
   async _updateObject(event, formData) {
     // If there is an EndCondition, this is a temporary effect. Signal this by setting the core.statusId value.
+    if (!formData.flags?.gurps?.effect) formData.flags.gurps = { effect: { }}
     let newEndCondition = formData.flags?.gurps?.endCondition
     formData.flags['core.statusId'] = (!!newEndCondition) ? this.object.data.label : null
 
