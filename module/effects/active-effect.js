@@ -3,12 +3,18 @@
 import { SYSTEM_NAME } from '../../lib/miscellaneous-settings.js'
 import { parselink } from '../../lib/parselink.js'
 import { i18n, i18n_f } from '../../lib/utilities.js'
+import GurpsActiveEffectConfig from './active-effect-config.js'
 
 const ACTIVE_EFFECT_AUTOREMOVE = 'AE-autoremove'
 
 export default class GurpsActiveEffect extends ActiveEffect {
   static init() {
     CONFIG.ActiveEffect.documentClass = GurpsActiveEffect
+
+    DocumentSheetConfig.registerSheet(ActiveEffect, 'gurps', GurpsActiveEffectConfig, {
+      makeDefault: true,
+    })
+    // CONFIG.ActiveEffect.sheetClass = GurpsActiveEffectConfig
 
     // Keep track of the last version number
     game.settings.register(SYSTEM_NAME, ACTIVE_EFFECT_AUTOREMOVE, {
@@ -78,7 +84,7 @@ export default class GurpsActiveEffect extends ActiveEffect {
    * @param {*} _userId
    */
   static async _create(effect, _data, _userId) {
-    if (this.gurpsData?.requiresConfig === true) {
+    if (effect.gurpsData?.requiresConfig === true) {
       await effect.sheet.render(true)
     }
   }

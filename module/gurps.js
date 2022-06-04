@@ -65,7 +65,6 @@ import GurpsToken from './token.js'
 import { parseDecimalNumber } from '../lib/parse-decimal-number/parse-decimal-number.js'
 import Maneuvers from './actor/maneuver.js'
 import { EffectModifierControl } from './actor/effect-modifier-control.js'
-import GurpsActiveEffectConfig from './effects/active-effect-config.js'
 import * as GURPSSpeedProvider from './speed-provider.js'
 import { multiplyDice } from './utilities/damage-utils.js'
 import GurpsWiring from './gurps-wiring.js'
@@ -1844,10 +1843,6 @@ if (!window.GURPS) {
     // @ts-ignore
     CONFIG.Actor.documentClass = GurpsActor
     CONFIG.Item.documentClass = GurpsItem
-
-    // add custom ActiveEffectConfig sheet class
-    CONFIG.ActiveEffect.sheetClass = GurpsActiveEffectConfig
-    // ActiveEffectConfig.registerSheet(Document, 'ActiveEffect', GurpsActiveEffectConfig, { makeDefault: true })
 
     // preload drag-and-drop image
     {
