@@ -9,6 +9,7 @@ Imports System.Diagnostics
 'Added for file Encoding ~Stevil
 Imports System.Text
 Imports System.Text.RegularExpressions
+Imports System.Security.SecurityElement
 
 'Everything from here and below is normal code and Imports and such, just as it is
 'when developing within Visual Studio for VB projects.
@@ -33,7 +34,7 @@ Public Class ExportToFoundryVTT
     Private OwnedItemText As String = "* = item is owned by another, its point value and/or cost is included in the other item."
     Private ShowOwnedMessage As Boolean
     ''' <summary>
-    ''' If multiple Characters might be printed, this is the value of the Always Ask Me option
+    ''' If multiple characters might be printed, this is the value of the Always Ask Me option
     ''' </summary>
     ''' <remarks></remarks>
     Private AlwaysAskMe As Integer
@@ -83,9 +84,9 @@ Public Class ExportToFoundryVTT
         newOption = New GCA5Engine.SheetOption
         newOption.Name = "OutputCharacters"
         newOption.Type = GCA5Engine.OptionType.ListNumber
-        newOption.UserPrompt = "When exporting, how do you want to handle exporting when multiple Characters are loaded?"
+        newOption.UserPrompt = "When exporting, how do you want to handle exporting when multiple characters are loaded?"
         newOption.DefaultValue = 0 'first item
-        newOption.List = {"Export just the current Character", "Export all the Characters to the file", "Always ask me what to do"}
+        newOption.List = {"Export just the current character", "Export all the characters to the file", "Always ask me what to do"}
         ok = Options.AddOption(newOption)
         AlwaysAskMe = 2
 
@@ -94,7 +95,7 @@ Public Class ExportToFoundryVTT
         newOption = New GCA5Engine.SheetOption
         newOption.Name = "CharacterSeparator"
         newOption.Type = GCA5Engine.OptionType.ListNumber
-        newOption.UserPrompt = "Please select how you'd like to mark the break between Characters when printing multiple Characters to the file."
+        newOption.UserPrompt = "Please select how you'd like to mark the break between characters when printing multiple characters to the file."
         newOption.DefaultValue = 1 'second item
         newOption.List = {"Do nothing", "Print a line of *", "Print a line of =", "Print a line of -", "Use HTML to indicate a horizontal rule"}
         ok = Options.AddOption(newOption)
@@ -163,7 +164,7 @@ Public Class ExportToFoundryVTT
         newOption.Type = GCA5Engine.OptionType.ListNumber
         newOption.UserPrompt = "Please select the way you'd like to differentiate bonus lines ('Includes: +X from Z') from their related items."
         newOption.DefaultValue = 1 'second item
-        newOption.List = {"Do nothing", "Use a tab Character preceding them", "Use BBCode to mark them in italic", "Use HTML to mark them in italic", "Tab Character and BBCode", "Tab Character and HTML"}
+        newOption.List = {"Do nothing", "Use a tab character preceding them", "Use BBCode to mark them in italic", "Use HTML to mark them in italic", "Tab character and BBCode", "Tab character and HTML"}
         ok = Options.AddOption(newOption)
 
         'NOTE: Because List is now a 0-based Array, the number of the 
@@ -206,6 +207,18 @@ Public Class ExportToFoundryVTT
         Return AutoFindVersion()
     End Function
 
+    'Public ReadOnly Property Description As String Implements GCA5.Interfaces.IExportSheet.Description
+    '    Get
+    '        Return "Exports a simple text file from currently loaded GCA5 characters."
+    '    End Get
+    'End Property
+
+    'Public ReadOnly Property Name As String Implements GCA5.Interfaces.IExportSheet.Name
+    '    Get
+    '        Return "Simple Text Export"
+    '    End Get
+    'End Property
+
     Public Function PreferredFilterIndex() As Integer Implements GCA5.Interfaces.IExportSheet.PreferredFilterIndex
         'Only returns one filter type, so we just use that. Remember this is 0-based!
         Return 0
@@ -214,6 +227,12 @@ Public Class ExportToFoundryVTT
     Public Function SupportedFileTypeFilter() As String Implements GCA5.Interfaces.IExportSheet.SupportedFileTypeFilter
         Return "XML files (*.xml)|*.xml"
     End Function
+
+    'Public ReadOnly Property Version As String Implements GCA5.Interfaces.IExportSheet.Version
+    '    Get
+    '        Return AutoFindVersion()
+    '    End Get
+    'End Property
 
     Public Function GenerateExport(Party As GCA5Engine.Party, TargetFilename As String, Options As GCA5Engine.SheetOptionsManager) As Boolean Implements GCA5.Interfaces.IExportSheet.GenerateExport
         Dim PrintMults As Boolean = False
@@ -226,7 +245,7 @@ Public Class ExportToFoundryVTT
         MyOptions = Options
 
         'set our default PrintMults
-        'newOption.List = {"Export just the current Character", "Export all the Characters to the file", "Always ask me what to do"}
+        'newOption.List = {"Export just the current character", "Export all the characters to the file", "Always ask me what to do"}
         If MyOptions.Value("OutputCharacters") = 1 Then
             PrintMults = True
         End If
@@ -236,7 +255,7 @@ Public Class ExportToFoundryVTT
         'Dim RunSpecificOptions As New GCA5Engine.SheetOptionsManager("RunSpecificOptions For " & Name)
         'RaiseEvent RequestRunSpecificOptions(RunSpecificOptions)
 
-        'if there are multiple Characters...
+        'if there are multiple characters...
         If Party.Characters.Count > 1 Then
             '... and if we're supposed to ask what to do...
             If MyOptions.Value("OutputCharacters") = AlwaysAskMe Then
@@ -262,9 +281,9 @@ Public Class ExportToFoundryVTT
                 newOption = New GCA5Engine.SheetOption
                 newOption.Name = "OutputCharacters"
                 newOption.Type = GCA5Engine.OptionType.ListNumber
-                newOption.UserPrompt = "When exporting, how do you want to handle exporting when multiple Characters are loaded?"
+                newOption.UserPrompt = "When exporting, how do you want to handle exporting when multiple characters are loaded?"
                 newOption.DefaultValue = 0 'first item
-                newOption.List = {"Export just the current Character", "Export all the Characters to the file"}
+                newOption.List = {"Export just the current character", "Export all the characters to the file"}
                 ok = RunSpecificOptions.AddOption(newOption)
 
                 'Create the event object that will carry our options and tell us later if the dialog was canceled
@@ -280,10 +299,24 @@ Public Class ExportToFoundryVTT
                 End If
 
                 If RunSpecificOptions.Value("OutputCharacters") = 1 Then
-                    'print just one Character
+                    'print just one character
                     PrintMults = True
                 End If
 
+                '*****
+                '* The commented block below could replace the code above, if the input needed is as simple as the example used here.
+                '*****
+                'Select Case MsgBox("By default, only the Current character will be exported. Do you want to export ALL the loaded characters instead?", MsgBoxStyle.YesNoCancel, "Export All Characters")
+                '    Case MsgBoxResult.Cancel
+                '        'cancel, abort export
+                '        Return False
+                '    Case MsgBoxResult.No
+                '        'No, print just the one character
+                '        PrintMults = False
+                '    Case Else
+                '        'Yes, print all characters
+                '        PrintMults = True
+                'End Select
             End If
         Else
             PrintMults = False
@@ -300,7 +333,7 @@ Public Class ExportToFoundryVTT
         PrintMults = False
 
         If PrintMults Then
-            'Export every Character to this file
+            'Export every character to this file
             For Each CurChar As GCACharacter In Party.Characters
                 ExportToFoundryVTT(CurChar, fw)
 
@@ -319,7 +352,7 @@ Public Class ExportToFoundryVTT
                 fw.Paragraph("")
             Next
         Else
-            'just print Current Character
+            'just print Current character
             ExportToFoundryVTT(Party.Current, fw)
         End If
 
@@ -337,9 +370,11 @@ Public Class ExportToFoundryVTT
         Return True
     End Function
 
-'******************************************************************************************
-'* All Internal Routines
-'******************************************************************************************
+
+
+    '******************************************************************************************
+    '* All Internal Routines
+    '******************************************************************************************
     Public Function AutoFindVersion() As String
         Dim longFormVersion As String = ""
 
@@ -376,19 +411,24 @@ Public Class ExportToFoundryVTT
 '* ~ Stevil
 '****************************************
     Private Sub ExportToFoundryVTT(CurChar As GCACharacter, fw As FileWriter)
+
         fw.Paragraph("<?xml version=""1.0"" encoding=""utf-8""?>")
         fw.Paragraph("<root release=""Foundry"" version=""GCA5-13"">")
         fw.Paragraph("<character>")
-        fw.Paragraph("<name type=""string"">" & CurChar.Name & "</name>")
+            Notify(PluginName() & ": <name>", Priority.Green)
+        fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Name) & "</name>")
         fw.Paragraph("")
+            Notify(PluginName() & ": <abilities>", Priority.Green)
         fw.Paragraph("<abilities>")
         fw.Paragraph("")
         fw.Paragraph("<skilllist>")
+            Notify(PluginName() & ": <skilllist>", Priority.Green)
             ExportSkills(CurChar, fw)
         fw.Paragraph("</skilllist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<spelllist>")
+            Notify(PluginName() & ": <spelllist>", Priority.Green)
             ExportSpells(CurChar, fw)
         fw.Paragraph("</spelllist>")
         fw.Paragraph("")
@@ -396,24 +436,29 @@ Public Class ExportToFoundryVTT
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<attributes>")
+            Notify(PluginName() & ": <attributes>", Priority.Green)
             ExportAttributes(CurChar, fw)
         fw.Paragraph("</attributes>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<combat>")
+            Notify(PluginName() & ": <combat>", Priority.Green)
             ExportCombat(CurChar, fw)
         fw.Paragraph("")
         fw.Paragraph("<meleecombatlist>")
+            Notify(PluginName() & ": <meleecombatlist>", Priority.Green)
             ExportMeleeAttacks(CurChar, fw)
         fw.Paragraph("</meleecombatlist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<rangedcombatlist>")
+            Notify(PluginName() & ": <rangedcombatlist>", Priority.Green)
             ExportRangedAttacks(CurChar, fw)
         fw.Paragraph("</rangedcombatlist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<protectionlist>")
+            Notify(PluginName() & ": <protectionlist>", Priority.Green)
             ExportProtection(CurChar, fw)
         fw.Paragraph("</protectionlist>")
         fw.Paragraph("")
@@ -421,52 +466,65 @@ Public Class ExportToFoundryVTT
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<encumbrance>")
+            Notify(PluginName() & ": <encumbrance>", Priority.Green)
             ExportEncumbrance(CurChar, fw)
         fw.Paragraph("</encumbrance>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<traits>")
+            Notify(PluginName() & ": <traits>", Priority.Green)
             ExportTraits(CurChar, fw)
         fw.Paragraph("")
         fw.Paragraph("<adslist>")
+            Notify(PluginName() & ": <adslist>", Priority.Green)
             ExportAds(CurChar, fw)
         fw.Paragraph("</adslist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<disadslist>")
+            Notify(PluginName() & ": <disadslist>", Priority.Green)
             ExportDisads(CurChar, fw)
         fw.Paragraph("</disadslist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<culturalfamiliaritylist>")
+            Notify(PluginName() & ": <culturalfamiliaritylist>", Priority.Green)
             ExportCulturalFamiliarity(CurChar, fw)
         fw.Paragraph("</culturalfamiliaritylist>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<languagelist>")
+            Notify(PluginName() & ": <languagelist>", Priority.Green)
             ExportLanguages(CurChar, fw)
         fw.Paragraph("</languagelist>")
         fw.Paragraph("")
         fw.Paragraph("<reactionmodifiers>")
+            Notify(PluginName() & ": <reactionmodifiers>", Priority.Green)
             ExportReactionModifiers(CurChar, fw)
         fw.Paragraph("</reactionmodifiers>")
         fw.Paragraph("")
         fw.Paragraph("<conditionalmods>")
+            Notify(PluginName() & ": <conditionalmods>", Priority.Green)
             ExportConditionalModifiers(CurChar, fw)
         fw.Paragraph("</conditionalmods>")
         fw.Paragraph("")
+            Notify(PluginName() & ": <tl>", Priority.Green)
             ExportTechLevel(CurChar, fw)
         fw.Paragraph("</traits>")
         fw.Paragraph("")
         fw.Paragraph("")
         fw.Paragraph("<inventorylist>")
+            Notify(PluginName() & ": <inventorylist>", Priority.Green)
             ExportEquipment(CurChar, fw)
         fw.Paragraph("</inventorylist>")
         fw.Paragraph("")
+            Notify(PluginName() & ": <description>", Priority.Green)
             ExportDescription(CurChar, fw)
+            Notify(PluginName() & ": <notes>", Priority.Green)
             ExportNotes(CurChar, fw)
         fw.Paragraph("")
         fw.Paragraph("<pointtotals>")
+            Notify(PluginName() & ": <pointtotals>", Priority.Green)
             ExportPointSummary(CurChar, fw)
         fw.Paragraph("</pointtotals>")
         fw.Paragraph("")
@@ -515,8 +573,8 @@ Public Class ExportToFoundryVTT
                     tmp = tmp & work
                 End If
 
-                fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
-                fw.Paragraph("<type type=""string"">" & CurChar.Items(i).TagItem("type") & "</type>")
+                fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
+                fw.Paragraph("<type type=""string"">" & myEscape(CurChar.Items(i).TagItem("type")) & "</type>")
                 fw.Paragraph("<level type=""number"">" & CurChar.Items(i).Level & "</level>")
 
                 work = CurChar.Items(i).TagItem("stepoff")
@@ -531,11 +589,10 @@ Public Class ExportToFoundryVTT
                 Else
                     tmp = tmp & "?+?"
                 End If
-                fw.Paragraph("<relativelevel type=""string"">" & tmp & "</relativelevel>")
-
+                fw.Paragraph("<relativelevel type=""string"">" & myEscape(tmp) & "</relativelevel>")
                 fw.Paragraph("<points type=""number"">" & CurChar.Items(i).TagItem("points") & "</points>")
-                fw.Paragraph("<text type=""string"">" & CurChar.Items(i).TagItem("usernotes") & "</text>")
-                fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                fw.Paragraph("<text type=""string"">" & myEscape(CurChar.Items(i).TagItem("usernotes")) & "</text>")
+                fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                 fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                 fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
 
@@ -606,19 +663,19 @@ Public Class ExportToFoundryVTT
                 spellCat = ""
             End If
                 
-                fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
+                fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
+                fw.Paragraph("<description type=""string"">" & myEscape(CurChar.Items(i).TagItem("description")) & "</description>")
                 fw.Paragraph("<level type=""number"">" & CurChar.Items(i).Level & "</level>")
-                fw.Paragraph("<class type=""string"">" & spellClass & "</class>")
-                fw.Paragraph("<type type=""string"">" & CurChar.Items(i).TagItem("type") & "</type>")
+                fw.Paragraph("<class type=""string"">" & myEscape(spellClass) & "</class>")
+                fw.Paragraph("<type type=""string"">" & myEscape(CurChar.Items(i).TagItem("type")) & "</type>")
                 fw.Paragraph("<points type=""number"">" & CurChar.Items(i).TagItem("points") & "</points>")
-                fw.Paragraph("<text type=""string"">" & CurChar.Items(i).TagItem("usernotes") & "</text>")
-
-                fw.Paragraph("<time type=""string"">" & CurChar.Items(i).TagItem("time") & "</time>")
-                fw.Paragraph("<duration type=""string"">" & CurChar.Items(i).TagItem("duration") & "</duration>")
-                fw.Paragraph("<costmaintain type=""string"">" & CurChar.Items(i).TagItem("castingcost") & "</costmaintain>")
-                fw.Paragraph("<resist type=""string"">" & spellResist & "</resist>")
-                fw.Paragraph("<college type=""string"">" & spellCat & "</college>")
-                fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                fw.Paragraph("<text type=""string"">" & myEscape(CurChar.Items(i).TagItem("usernotes")) & "</text>")
+                fw.Paragraph("<time type=""string"">" & myEscape(CurChar.Items(i).TagItem("time")) & "</time>")
+                fw.Paragraph("<duration type=""string"">" & myEscape(CurChar.Items(i).TagItem("duration")) & "</duration>")
+                fw.Paragraph("<costmaintain type=""string"">" & myEscape(CurChar.Items(i).TagItem("castingcost")) & "</costmaintain>")
+                fw.Paragraph("<resist type=""string"">" & myEscape(spellResist) & "</resist>")
+                fw.Paragraph("<college type=""string"">" & myEscape(spellCat) & "</college>")
+                fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                 fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                 fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
 
@@ -704,53 +761,53 @@ Public Class ExportToFoundryVTT
 
         ListLoc = CurChar.ItemPositionByNameAndExt("Basic Lift", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<basiclift type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</basiclift>")
+            fw.Paragraph("<basiclift type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</basiclift>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("One-Handed Lift", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<onehandedlift type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</onehandedlift>")
+            fw.Paragraph("<onehandedlift type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</onehandedlift>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Two-Handed Lift", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<twohandedlift type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</twohandedlift>")
+            fw.Paragraph("<twohandedlift type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</twohandedlift>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Shove/Knock Over", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<shove type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</shove>")
+            fw.Paragraph("<shove type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</shove>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Carry on Back", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<carryonback type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</carryonback>")
+            fw.Paragraph("<carryonback type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</carryonback>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Shift Slightly", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<shiftslightly type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</shiftslightly>")
+            fw.Paragraph("<shiftslightly type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</shiftslightly>")
         End If
 
         ListLoc = CurChar.ItemPositionByNameAndExt("Fright Check", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<frightcheck type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</frightcheck>")
+            fw.Paragraph("<frightcheck type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</frightcheck>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Taste/Smell", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<tastesmell type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</tastesmell>")
+            fw.Paragraph("<tastesmell type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</tastesmell>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Touch", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<touch type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</touch>")
+            fw.Paragraph("<touch type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</touch>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Vision", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<vision type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</vision>")
+            fw.Paragraph("<vision type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</vision>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Hearing", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<hearing type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</hearing>")
+            fw.Paragraph("<hearing type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</hearing>")
         End If
 
 
-        fw.Paragraph("<thrust type=""string"">" & CurChar.BaseTH & "</thrust>")
-        fw.Paragraph("<swing type=""string"">" & CurChar.BaseSW & "</swing>")
+        fw.Paragraph("<thrust type=""string"">" & myEscape(CurChar.BaseTH) & "</thrust>")
+        fw.Paragraph("<swing type=""string"">" & myEscape(CurChar.BaseSW) & "</swing>")
 
         ListLoc = CurChar.ItemPositionByNameAndExt("Speed", Stats)
         If ListLoc = 0 Then
@@ -758,7 +815,7 @@ Public Class ExportToFoundryVTT
         End If
 
         If ListLoc > 0 Then
-            fw.Paragraph("<basicspeed type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</basicspeed>")
+            fw.Paragraph("<basicspeed type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</basicspeed>")
             fw.Paragraph("<basicspeed_points type=""number"">" & CurChar.Items(ListLoc).TagItem("points") & "</basicspeed_points>")
         End If
 
@@ -768,7 +825,7 @@ Public Class ExportToFoundryVTT
         End If
 
         If ListLoc > 0 Then
-            fw.Paragraph("<basicmove type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</basicmove>")
+            fw.Paragraph("<basicmove type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</basicmove>")
             fw.Paragraph("<basicmove_points type=""number"">" & CurChar.Items(ListLoc).TagItem("points") & "</basicmove_points>")
         End If
 
@@ -776,27 +833,27 @@ Public Class ExportToFoundryVTT
         If EncRow = 0 Then
             ListLoc = CurChar.ItemPositionByNameAndExt("No Encumbrance Move", Stats)
             If ListLoc > 0 Then
-                fw.Paragraph("<move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</move>")
+                fw.Paragraph("<move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</move>")
             End If
         ElseIf EncRow = 1 Then
             ListLoc = CurChar.ItemPositionByNameAndExt("Light Encumbrance Move", Stats)
             If ListLoc > 0 Then
-                fw.Paragraph("<move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</move>")
+                fw.Paragraph("<move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</move>")
             End If
         ElseIf EncRow = 2 Then
             ListLoc = CurChar.ItemPositionByNameAndExt("Medium Encumbrance Move", Stats)
             If ListLoc > 0 Then
-                fw.Paragraph("<move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</move>")
+                fw.Paragraph("<move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</move>")
             End If
         ElseIf EncRow = 3 Then
             ListLoc = CurChar.ItemPositionByNameAndExt("Heavy Encumbrance Move", Stats)
             If ListLoc > 0 Then
-                fw.Paragraph("<move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</move>")
+                fw.Paragraph("<move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</move>")
             End If
         ElseIf EncRow = 4 Then
             ListLoc = CurChar.ItemPositionByNameAndExt("X-Heavy Encumbrance Move", Stats)
             If ListLoc > 0 Then
-                fw.Paragraph("<move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</move>")
+                fw.Paragraph("<move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</move>")
             End If
         End If
 
@@ -853,7 +910,7 @@ Public Class ExportToFoundryVTT
 
         fw.Paragraph("<parry type=""number"">" & CurChar.parryscore & "</parry>")
         fw.Paragraph("<block type=""number"">" & CurChar.blockscore & "</block>")
-        fw.Paragraph("<dr type=""string"">" & RemoveNoteBrackets(CurChar.Body.Item("Torso").DR) & "</dr>")
+        fw.Paragraph("<dr type=""string"">" & myEscape(RemoveNoteBrackets(CurChar.Body.Item("Torso").DR)) & "</dr>")
 
     End Sub
 
@@ -927,26 +984,26 @@ Public Class ExportToFoundryVTT
                 fw.Paragraph("<id-" & tag_index & ">")
 
                 ' print the name
-                fw.Paragraph("<name type=""string"">" &  UpdateEscapeChars(CurChar.Items(i).FullNameTL) & "</name>")
+                fw.Paragraph("<name type=""string"">" &  myEscape(CurChar.Items(i).FullNameTL) & "</name>")
 
                 'print the minimum strength required (not currently shown on Fantasy Grounds character sheet)
-                'note dagger and double dagger are converted to an escape sequence as they do not exist in the encoding used by xml and FG
+                'note dagger and double dagger are converted to a "myEscape()" sequence as they do not exist in the encoding used by xml and FG
                 'the dagger character us Unicode 2020 and the double dagger us Unicode 2021
-                fw.Paragraph("<st type=""string"">" & UpdateEscapeChars(CurChar.Items(i).DamageModeTagItem(CurMode, "minst")) & "</st>")
+                fw.Paragraph("<st type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "minst")) & "</st>")
 
                 'print the cost (currently shown on equipment page instead of weapons page due to space restrictions)
-                fw.Paragraph("<cost type=""string"">" & StrToDbl(CurChar.Items(i).tagitem("cost")) / qty & "</cost>")
+                fw.Paragraph("<cost type=""string"">" & myEscape(StrToDbl(CurChar.Items(i).tagitem("cost")) / qty) & "</cost>")
 
                 'print the weight (currently shown on equipment page instead of weapons page due to space restrictions)
-                fw.Paragraph("<weight type=""string"">" & StrToDbl(CurChar.Items(i).tagitem("weight")) /qty & "</weight>")
+                fw.Paragraph("<weight type=""string"">" & myEscape(StrToDbl(CurChar.Items(i).tagitem("weight")) /qty) & "</weight>")
 
                 'print the notes (not currently shown on Fantasy Grounds character sheet)
-                fw.Paragraph("<text type=""string"">" & CurChar.Items(i).TagItem("usernotes") & "</text>")
+                fw.Paragraph("<text type=""string"">" & myEscape(CurChar.Items(i).TagItem("usernotes")) & "</text>")
                 
-                fw.Paragraph("<tl type=""string"">" & CurChar.Items(i).TagItem("techlvl") & "</tl>")
-                
+                fw.Paragraph("<tl type=""string"">" & myEscape(CurChar.Items(i).TagItem("techlvl")) & "</tl>")
+
                 db = CurChar.items(i).tagitem("chardb")
-                
+
                 weapon_mode_index = 0
                 fw.Paragraph("<meleemodelist>")
                 Do
@@ -957,7 +1014,7 @@ Public Class ExportToFoundryVTT
                     fw.Paragraph("<id-" & mode_tag_index & ">")
 
                     'print the mode
-                    fw.Paragraph("<name type=""string"">" & CurChar.Items(i).DamageModeName(CurMode) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Items(i).DamageModeName(CurMode)) & "</name>")
 
                     ' print the skill level
                     saved_level = CurChar.Items(i).DamageModeTagItem(CurMode, "charskillscore")
@@ -969,21 +1026,21 @@ Public Class ExportToFoundryVTT
                         DamageText = DamageText & " (" & CurChar.Items(i).DamageModeTagItem(CurMode, "chararmordivisor") & ")"
                     End If
                     DamageText = DamageText & " " & CurChar.Items(i).DamageModeTagItem(CurMode, "chardamtype")
-                    fw.Paragraph("<damage type=""string"">" & DamageText & "</damage>")
+                    fw.Paragraph("<damage type=""string"">" & myEscape(DamageText) & "</damage>")
 
                     ' print the unmodified damage
-                    DamageText = RemoveAfterBasicDamage(CurChar.Items(i).DamageModeTagItem(CurMode, "damage"))
+                    DamageText = CurChar.Items(i).DamageModeTagItem(CurMode, "damage")
                     If CurChar.Items(i).DamageModeTagItem(CurMode, "armordivisor") <> "" Then
                         DamageText = DamageText & " (" & CurChar.Items(i).DamageModeTagItem(CurMode, "armordivisor") & ")"
                     End If
                     DamageText = DamageText & " " & CurChar.Items(i).DamageModeTagItem(CurMode, "chardamtype")
-                    fw.Paragraph("<unmodifiedDamage type=""string"">" & DamageText & "</unmodifiedDamage>")
+                    fw.Paragraph("<unmodifiedDamage type=""string"">" & myEscape(CreateUnmodifiedDamage(DamageText)) & "</unmodifiedDamage>")
 
                     'print the reach
-                    fw.Paragraph("<reach type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charreach") & "</reach>")
+                    fw.Paragraph("<reach type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "charreach")) & "</reach>")
 
                     'print the parry
-                    fw.Paragraph("<parry type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charparryscore") & "</parry>")
+                    fw.Paragraph("<parry type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "charparryscore")) & "</parry>")
 
                 ' If it has a DB value, then compute a block (since I can't find the "blocklevel")
                     if db <> "" Then
@@ -1005,7 +1062,7 @@ Public Class ExportToFoundryVTT
                         If pos > 0 Then
                             block = CurChar.Items(pos).TagItem("blocklevel")
                             blk = StrToLng(block)
-                        fw.Paragraph("<block type=""string"">" & (blk + db) & "</block>")
+                        fw.Paragraph("<block type=""string"">" & myEscape((blk + db)) & "</block>")
                         End If
                     End If
 
@@ -1060,22 +1117,22 @@ Public Class ExportToFoundryVTT
                     fw.Paragraph("<id-" & tag_index & ">")
 
                     ' print the name
-                    fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(CurChar.Items(i).FullNameTL) & "</name>" )
+                    fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Items(i).FullNameTL) & "</name>" )
                     'print the minimum strength required (not currently shown on Fantasy Grounds character sheet)
-                    'note dagger and double dagger are converted to an escape sequence as they do not exist in the encoding used by xml and FG
+                    'note dagger and double dagger are converted to a "myEscape()" sequence as they do not exist in the encoding used by xml and FG
                     'the dagger character us Unicode 2020 and the double dagger us Unicode 2021
-                    fw.Paragraph("<st type=""string"">" & UpdateEscapeChars(CurChar.Items(i).DamageModeTagItem(CurMode, "minst")) & "</st>")
+                    fw.Paragraph("<st type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "minst")) & "</st>")
 
                     'print the bulk
                     fw.Paragraph("<bulk type=""number"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "bulk") & "</bulk>")
 
                     'print the legality class (not currently shown on Fantasy Grounds character sheet)
-                    fw.Paragraph("<lc type=""string"">" & CurChar.Items(i).TagItem("lc") & "</lc>")
+                    fw.Paragraph("<lc type=""string"">" & myEscape(CurChar.Items(i).TagItem("lc")) & "</lc>")
 
                     'print the notes (not currently shown on Fantasy Grounds character sheet)
-                    fw.Paragraph("<text type=""string"">" & CurChar.Items(i).TagItem("usernotes") & "</text>")
+                    fw.Paragraph("<text type=""string"">" & myEscape(CurChar.Items(i).TagItem("usernotes")) & "</text>")
 
-                    fw.Paragraph("<tl type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "techlvl") & "</tl>")
+                    fw.Paragraph("<tl type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "techlvl")) & "</tl>")
 
                     weapon_mode_index = 0
                     fw.Paragraph("<rangedmodelist>")
@@ -1087,7 +1144,7 @@ Public Class ExportToFoundryVTT
                         fw.Paragraph("<id-" & mode_tag_index & ">")
 
                         'print the mode
-                        fw.Paragraph("<name type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "name") & "</name>")
+                        fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "name")) & "</name>")
 
                         ' print the skill level
                         fw.Paragraph("<level type=""number"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charskillscore") & "</level>")
@@ -1098,15 +1155,15 @@ Public Class ExportToFoundryVTT
                             DamageText = DamageText & " (" & CurChar.Items(i).DamageModeTagItem(CurMode, "chararmordivisor") & ")"
                         End If
                         DamageText = DamageText & " " & CurChar.Items(i).DamageModeTagItem(CurMode, "chardamtype")
-                        fw.Paragraph("<damage type=""string"">" & DamageText & "</damage>")
+                        fw.Paragraph("<damage type=""string"">" & myEscape(DamageText) & "</damage>")
 
                         ' print the unmodified damage
-                        DamageText = RemoveAfterBasicDamage(CurChar.Items(i).DamageModeTagItem(CurMode, "damage"))
+                        DamageText = CurChar.Items(i).DamageModeTagItem(CurMode, "damage")
                         If CurChar.Items(i).DamageModeTagItem(CurMode, "armordivisor") <> "" Then
                             DamageText = DamageText & " (" & CurChar.Items(i).DamageModeTagItem(CurMode, "armordivisor") & ")"
                         End If
                         DamageText = DamageText & " " & CurChar.Items(i).DamageModeTagItem(CurMode, "chardamtype")
-                        fw.Paragraph("<unmodifiedDamage type=""string"">" & DamageText & "</unmodifiedDamage>")
+                        fw.Paragraph("<unmodifiedDamage type=""string"">" & myEscape(CreateUnmodifiedDamage(DamageText)) & "</unmodifiedDamage>")
 
                         ' print the accuracy
                         fw.Paragraph("<acc type=""number"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "characc") & "</acc>")
@@ -1118,13 +1175,13 @@ Public Class ExportToFoundryVTT
                         Else
                             RangeText = RangeText & "/" & CurChar.Items(i).DamageModeTagItem(CurMode, "charrangemax")
                         End If
-                        fw.Paragraph("<range type=""string"">" & RangeText & "</range>")
+                        fw.Paragraph("<range type=""string"">" & myEscape(RangeText) & "</range>")
 
                         'print the RoF
-                        fw.Paragraph("<rof type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charrof") & "</rof>")
+                        fw.Paragraph("<rof type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "charrof")) & "</rof>")
 
                         'print the shots
-                        fw.Paragraph("<shots type=""string"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charshots") & "</shots>")
+                        fw.Paragraph("<shots type=""string"">" & myEscape(CurChar.Items(i).DamageModeTagItem(CurMode, "charshots")) & "</shots>")
 
                         'print the recoil
                         fw.Paragraph("<rcl type=""number"">" & CurChar.Items(i).DamageModeTagItem(CurMode, "charrcl") & "</rcl>")
@@ -1198,7 +1255,7 @@ Public Class ExportToFoundryVTT
 
                 locDR = RemoveNoteBrackets(locDR)
 
-                fw.Paragraph("<location type=""string"">" & CurChar.Body.Item(i).Name & "</location>")
+                fw.Paragraph("<location type=""string"">" & myEscape(CurChar.Body.Item(i).Name) & "</location>")
                 fw.Paragraph("<dr type=""string"">" & locDR & "</dr>")
 
                 fw.Paragraph("</id-" & tag_index & ">")
@@ -1252,45 +1309,45 @@ Public Class ExportToFoundryVTT
         ' weight list
         ListLoc = CurChar.ItemPositionByNameAndExt("No Encumbrance", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc0_weight type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc0_weight>")
+            fw.Paragraph("<enc0_weight type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc0_weight>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Light Encumbrance", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc1_weight type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc1_weight>")
+            fw.Paragraph("<enc1_weight type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc1_weight>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Medium Encumbrance", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc2_weight type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc2_weight>")
+            fw.Paragraph("<enc2_weight type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc2_weight>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Heavy Encumbrance", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc3_weight type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc3_weight>")
+            fw.Paragraph("<enc3_weight type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc3_weight>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("X-Heavy Encumbrance", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc4_weight type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc4_weight>")
+            fw.Paragraph("<enc4_weight type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc4_weight>")
         End If
 
         ' move list
         ListLoc = CurChar.ItemPositionByNameAndExt("No Encumbrance Move", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc0_move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc0_move>")
+            fw.Paragraph("<enc0_move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc0_move>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Light Encumbrance Move", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc1_move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc1_move>")
+            fw.Paragraph("<enc1_move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc1_move>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Medium Encumbrance Move", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc2_move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc2_move>")
+            fw.Paragraph("<enc2_move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc2_move>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Heavy Encumbrance Move", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc3_move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc3_move>")
+            fw.Paragraph("<enc3_move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc3_move>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("X-Heavy Encumbrance Move", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<enc4_move type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</enc4_move>")
+            fw.Paragraph("<enc4_move type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</enc4_move>")
         End If
 
         ' dodge list
@@ -1316,19 +1373,19 @@ Public Class ExportToFoundryVTT
 
         Dim ListLoc As Integer
 
-        fw.Paragraph("<race type=""string"">" & CurChar.Race & "</race>")
-        fw.Paragraph("<height type=""string"">" & CurChar.Height & "</height>")
-        fw.Paragraph("<weight type=""string"">" & CurChar.Weight & "</weight>")
-        fw.Paragraph("<age type=""string"">" & CurChar.Age & "</age>")
-        fw.Paragraph("<appearance type=""string"">" & CurChar.Appearance & "</appearance>")
+        fw.Paragraph("<race type=""string"">" & myEscape(CurChar.Race) & "</race>")
+        fw.Paragraph("<height type=""string"">" & myEscape(CurChar.Height) & "</height>")
+        fw.Paragraph("<weight type=""string"">" & myEscape(CurChar.Weight) & "</weight>")
+        fw.Paragraph("<age type=""string"">" & myEscape(CurChar.Age) & "</age>")
+        fw.Paragraph("<appearance type=""string"">" & myEscape(CurChar.Appearance) & "</appearance>")
 
         ListLoc = CurChar.ItemPositionByNameAndExt("Size Modifier", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<sizemodifier type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</sizemodifier>")
+            fw.Paragraph("<sizemodifier type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</sizemodifier>")
         End If
         ListLoc = CurChar.ItemPositionByNameAndExt("Extra Arm Reach", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<reach type=""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</reach>")
+            fw.Paragraph("<reach type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</reach>")
         End If
 
     End Sub
@@ -1373,7 +1430,7 @@ Public Class ExportToFoundryVTT
                     tag_index = LeadingZeroes(ads_index)
 
                     fw.Paragraph("<id-" & tag_index & ">")
-                    fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
                     ' get the points cost
                     work = CInt(CurChar.Items(i).TagItem("points"))
                     ' if the item is a parent, subtract the points value of its children
@@ -1381,7 +1438,7 @@ Public Class ExportToFoundryVTT
                         work = work - CInt(CurChar.Items(i).TagItem("childpoints"))
                     End If
                     fw.Paragraph("<points type=""number"">" & CStr(work) & "</points>")
-                    fw.Paragraph("<text type=""string"">" & mods_text & CurChar.Items(i).TagItem("usernotes") & "</text>")
+                    fw.Paragraph("<text type=""string"">" & myEscape(mods_text & CurChar.Items(i).TagItem("usernotes")) & "</text>")
                     fw.Paragraph("</id-" & tag_index & ">")
 
                 End If
@@ -1414,7 +1471,8 @@ Public Class ExportToFoundryVTT
                         tag_index = LeadingZeroes(ads_index)
 
                         fw.Paragraph("<id-" & tag_index & ">")
-                        fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
+                        fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
+                        fw.Paragraph("<description type=""string"">" & myEscape(CurChar.Items(i).TagItem("description")) & "</description>")
                         ' get the points cost
                         work = CInt(CurChar.Items(i).TagItem("points"))
                         ' if the item is a parent, subtract the points value of its children
@@ -1422,8 +1480,8 @@ Public Class ExportToFoundryVTT
                             work = work - CInt(CurChar.Items(i).TagItem("childpoints"))
                         End If
                         fw.Paragraph("<points type=""number"">" & CStr(work) & "</points>")
-                        fw.Paragraph("<text type=""string"">" & mods_text & CurChar.Items(i).TagItem("usernotes") & "</text>")
-                        fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                        fw.Paragraph("<text type=""string"">" & myEscape(mods_text & CurChar.Items(i).TagItem("usernotes")) & "</text>")
+                        fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                         fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                         fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
                         fw.Paragraph("</id-" & tag_index & ">")
@@ -1457,7 +1515,8 @@ Public Class ExportToFoundryVTT
                     tag_index = LeadingZeroes(ads_index)
 
                     fw.Paragraph("<id-" & tag_index & ">")
-                    fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
+                    fw.Paragraph("<description type=""string"">" & myEscape(CurChar.Items(i).TagItem("description")) & "</description>")
                     ' get the points cost
                     work = CInt(CurChar.Items(i).TagItem("points"))
                     ' if the item is a parent, subtract the points value of its children
@@ -1465,8 +1524,8 @@ Public Class ExportToFoundryVTT
                         work = work - CInt(CurChar.Items(i).TagItem("childpoints"))
                     End If
                     fw.Paragraph("<points type=""number"">" & CStr(work) & "</points>")
-                    fw.Paragraph("<text type=""string"">" & mods_text & CurChar.Items(i).TagItem("usernotes") & "</text>")
-                    fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                    fw.Paragraph("<text type=""string"">" & myEscape(mods_text & CurChar.Items(i).TagItem("usernotes")) & "</text>")
+                    fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                     fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                     fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
                     fw.Paragraph("</id-" & tag_index & ">")
@@ -1517,7 +1576,7 @@ Public Class ExportToFoundryVTT
                     tag_index = LeadingZeroes(ads_index)
 
                     fw.Paragraph("<id-" & tag_index & ">")
-                    fw.Paragraph("<name type=""string"">" & CreateControlRoll(UpdateEscapeChars(tmp)) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & CreateControlRoll(myEscape(tmp)) & "</name>")
                     ' get the points cost
                     work = CInt(CurChar.Items(i).TagItem("points"))
                     ' if the item is a parent, subtract the points value of its children
@@ -1525,8 +1584,8 @@ Public Class ExportToFoundryVTT
                         work = work - CInt(CurChar.Items(i).TagItem("childpoints"))
                     End If
                     fw.Paragraph("<points type=""number"">" & CStr(work) & "</points>")
-                    fw.Paragraph("<text type=""string"">" & CreateControlRoll(mods_text & CurChar.Items(i).TagItem("usernotes")) & "</text>")
-                    fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                    fw.Paragraph("<text type=""string"">" & CreateControlRoll(myEscape(mods_text) & myEscape(CurChar.Items(i).TagItem("usernotes"))) & "</text>")
+                    fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                     fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                     fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
                     fw.Paragraph("</id-" & tag_index & ">")
@@ -1559,7 +1618,7 @@ Public Class ExportToFoundryVTT
                     tag_index = LeadingZeroes(ads_index)
 
                     fw.Paragraph("<id-" & tag_index & ">")
-                    fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(tmp) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(tmp) & "</name>")
                     ' get the points cost
                     work = CInt(CurChar.Items(i).TagItem("points"))
                     ' if the item is a parent, subtract the points value of its children
@@ -1567,8 +1626,8 @@ Public Class ExportToFoundryVTT
                         work = work - CInt(CurChar.Items(i).TagItem("childpoints"))
                     End If
                     fw.Paragraph("<points type=""number"">" & CStr(work) & "</points>")
-                    fw.Paragraph("<text type=""string"">" & mods_text & CurChar.Items(i).TagItem("usernotes") & "</text>")
-                    fw.Paragraph("<pageref type=""string"">" & CurChar.Items(i).TagItem("page") & "</pageref>")
+                    fw.Paragraph("<text type=""string"">" & myEscape(mods_text) & myEscape(CurChar.Items(i).TagItem("usernotes")) & "</text>")
+                    fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).TagItem("page")) & "</pageref>")
                     fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                     fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
                     fw.Paragraph("</id-" & tag_index & ">")
@@ -1601,8 +1660,8 @@ Public Class ExportToFoundryVTT
 
                     fw.Paragraph("<id-" & tag_index & ">")
 
-                    fw.Paragraph("<name type = ""string"">" & CurChar.Items(i).FullNameTL & "</name>")
-                    fw.Paragraph("<points type = ""number"">" & CurChar.Items(i).TagItem("points") & "</points>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Items(i).FullNameTL) & "</name>")
+                    fw.Paragraph("<points type=""number"">" & CurChar.Items(i).TagItem("points") & "</points>")
 
                     fw.Paragraph("</id-" & tag_index & ">")
 
@@ -1642,21 +1701,21 @@ Public Class ExportToFoundryVTT
                     ' print the name (adding a note if it is the native language)
 
                     If IsNativeLang(CurChar, i) Then
-                        fw.Paragraph("<name type = ""string"">" & Trim(CurChar.Items(i).Name) & " (Native)</name>")
+                        fw.Paragraph("<name type=""string"">" & myEscape(Trim(CurChar.Items(i).Name)) & " (Native)</name>")
                     Else
-                        fw.Paragraph("<name type = ""string"">" & Trim(CurChar.Items(i).Name) & "</name>")
+                        fw.Paragraph("<name type=""string"">" & myEscape(Trim(CurChar.Items(i).Name)) & "</name>")
                     End If
 
                     ' print the first extension (could be spoken or written, or a full language with both)
                     Select Case LCase(Trim(CurChar.Items(i).nameext))
                         Case "spoken"
-                            fw.Paragraph("<spoken type = ""string"">" & CurChar.Items(i).LevelName & "</spoken>")
+                            fw.Paragraph("<spoken type=""string"">" & myEscape(CurChar.Items(i).LevelName) & "</spoken>")
                         Case "written"
-                            fw.Paragraph("<written type = ""string"">" & CurChar.Items(i).LevelName & "</written>")
+                            fw.Paragraph("<written type=""string"">" & myEscape(CurChar.Items(i).LevelName) & "</written>")
                         Case Else
                             ' this is a full language, print the level to both spoken and written
-                            fw.Paragraph("<spoken type = ""string"">" & CurChar.Items(i).LevelName & "</spoken>")
-                            fw.Paragraph("<written type = ""string"">" & CurChar.Items(i).LevelName & "</written>")
+                            fw.Paragraph("<spoken type=""string"">" & myEscape(CurChar.Items(i).LevelName) & "</spoken>")
+                            fw.Paragraph("<written type=""string"">" & myEscape(CurChar.Items(i).LevelName) & "</written>")
                     End Select
 
                     ' and note the points cost
@@ -1665,9 +1724,9 @@ Public Class ExportToFoundryVTT
                     ' print the second extension if there are both spoken and written versions
                     If CurrName = NextName Then
                         If LCase(Trim(CurChar.Items(i + 1).nameext)) = "spoken" Then
-                            fw.Paragraph("<spoken type = ""string"">" & CurChar.Items(i + 1).LevelName & "</spoken>")
+                            fw.Paragraph("<spoken type=""string"">" & myEscape(CurChar.Items(i + 1).LevelName) & "</spoken>")
                         Else
-                            fw.Paragraph("<written type = ""string"">" & CurChar.Items(i + 1).LevelName & "</written>")
+                            fw.Paragraph("<written type=""string"">" & myEscape(CurChar.Items(i + 1).LevelName) & "</written>")
                         End If
 
                         ' add on the additional points
@@ -1678,7 +1737,7 @@ Public Class ExportToFoundryVTT
                     End If
 
                     ' print the total points
-                    fw.Paragraph("<points type = ""number"">" & tmpPoints & "</points>")
+                    fw.Paragraph("<points type=""number"">" & tmpPoints & "</points>")
 
                     fw.Paragraph("</id-" & tag_index & ">")
 
@@ -1796,8 +1855,8 @@ Public Class ExportToFoundryVTT
 
         ListLoc = CurChar.ItemPositionByNameAndExt("Tech Level", Stats)
         If ListLoc > 0 Then
-            fw.Paragraph("<tl type = ""string"">" & CurChar.Items(ListLoc).TagItem("score") & "</tl>")
-            fw.Paragraph("<tl_points type = ""number"">" & CurChar.Items(ListLoc).TagItem("points") & "</tl_points>")
+            fw.Paragraph("<tl type=""string"">" & myEscape(CurChar.Items(ListLoc).TagItem("score")) & "</tl>")
+            fw.Paragraph("<tl_points type=""number"">" & CurChar.Items(ListLoc).TagItem("points") & "</tl_points>")
         End If
 
     End Sub
@@ -1832,15 +1891,15 @@ Public Class ExportToFoundryVTT
                     
                     fw.Paragraph("<id-" & tag_index & ">")
                     fw.Paragraph("<isidentified type=""number"">1</isidentified>")
-                    fw.Paragraph("<name type=""string"">" & UpdateEscapeChars(CurChar.Items(i).FullNameTL) & "</name>")
+                    fw.Paragraph("<name type=""string"">" & myEscape(CurChar.Items(i).FullNameTL) & "</name>")
                     fw.Paragraph("<count type=""number"">" & CurChar.Items(i).tagitem("count") & "</count>")
-                    fw.Paragraph("<cost type=""string"">" & CurChar.Items(i).tagitem("cost") / qty & "</cost>")
+                    fw.Paragraph("<cost type=""string"">" & myEscape(CurChar.Items(i).tagitem("cost") / qty) & "</cost>")
                     fw.Paragraph("<weight type=""number"">" & CurChar.Items(i).tagitem("baseweight") & "</weight>")
                     fw.Paragraph("<weightsum type=""number"">" & CurChar.Items(i).tagitem("weight") / qty & "</weightsum>")
-                    fw.Paragraph("<location type=""string"">" & CurChar.Items(i).tagitem("location") & "</location>")
-                    fw.Paragraph("<notes type=""formattedtext"">" & UpdateEscapeChars(CurChar.Items(i).tagitem("description")) & "</notes>")
+                    fw.Paragraph("<location type=""string"">" & myEscape(CurChar.Items(i).tagitem("location")) & "</location>")
+                    fw.Paragraph("<notes type=""formattedtext"">" & myEscape(CurChar.Items(i).tagitem("description")) & "</notes>")
                     fw.Paragraph("<carried type=""number"">2</carried>")
-                    fw.Paragraph("<pageref type=""string"">" & UpdateEscapeChars(CurChar.Items(i).tagitem("page")) & "</pageref>")
+                    fw.Paragraph("<pageref type=""string"">" & myEscape(CurChar.Items(i).tagitem("page")) & "</pageref>")
                     fw.Paragraph("<parentuuid>" & CurChar.Items(i).ParentKey & "</parentuuid>")
                     fw.Paragraph("<uuid>k" & CurChar.Items(i).idkey & "</uuid>")
                     fw.Paragraph("</id-" & tag_index & ">")
@@ -1863,7 +1922,7 @@ Public Class ExportToFoundryVTT
 
         'Dim tmp As String
 
-        ' NB: need to convert carriage returns to the escape sequence '\r' here
+        ' NB: need to convert carriage returns to the a "myEscape()" sequence '\r' here
         ' at the moment double carriage returns are treated as a single space
 
         ' first strip out line feeds
@@ -1872,7 +1931,7 @@ Public Class ExportToFoundryVTT
 
         ' then print, converting carriage returns to \r
         ' (I've done this in two steps in case the pairs ever come through the other way round, e.g. after editing in a different app)
-        fw.Paragraph("<description type=""string"">" & UpdateEscapeChars(PlainText(CurChar.Description)) & "</description>")
+        fw.Paragraph("<description type=""string"">" & myEscape(PlainText(CurChar.Description)) & "</description>")
 
     End Sub
 
@@ -1891,7 +1950,7 @@ Public Class ExportToFoundryVTT
         fw.Paragraph("<notelist>")
         fw.Paragraph("<id-00001>")
 
-        ' NB: need to convert carriage returns to the escape sequence '\r' here
+        ' NB: need to convert carriage returns to the a "myEscape()" sequence '\r' here
         ' at the moment double carriage returns are treated as a single space
         ' Changed the '\r' to an HTML '<br>'. ~Stevil
 
@@ -1902,7 +1961,7 @@ Public Class ExportToFoundryVTT
         ' then print, converting carriage returns to \r
         ' (I've done this in two steps in case the pairs ever come through the other way round, e.g. after editing in a different app)
         fw.Paragraph("<name type=""string"">Character Note</name>")
-        fw.Paragraph("<text type=""string"">" & UpdateEscapeChars(PlainText(CurChar.Notes)) & "</text>")
+        fw.Paragraph("<text type=""string"">" & myEscape(PlainText(CurChar.Notes)) & "</text>")
 
         fw.Paragraph("</id-00001>")
         fw.Paragraph("</notelist>")
@@ -1940,18 +1999,21 @@ Public Class ExportToFoundryVTT
     End Sub
 
 
-
 '****************************************
 '* Function
 '* Added to "Export to Foundry VTT"
 '* ~ Stevil
 '****************************************
-    Public Function RemoveAfterBasicDamage(ByVal damage)
+    Public Function CreateUnmodifiedDamage(ByVal damage)
         Dim correctDamage As Array
         Dim MyString As String
 
         correctDamage = Split(damage, "+ ")
-        MyString = correctDamage(0).Replace(" ", "")
+        MyString = correctDamage(0).trim()
+
+        If MyString.Contains("$solver") OrElse MyString.Contains("%level") Then
+            Return ""
+        End If
 
         Return MyString
         
@@ -2005,16 +2067,13 @@ Public Class ExportToFoundryVTT
 '* Converted from "Export to Foundry VTT"
 '* ~ Stevil
 '****************************************
-    Public Function UpdateEscapeChars(ByVal MyString)
+    Public Function myEscape(ByVal MyString)
+        MyString = Escape(MyString)
         MyString = Replace(MyString, Chr(10), "<br>")
         MyString = Replace(MyString, Chr(13), "<br>")
-        MyString = Replace(MyString, "&", "&amp;")
         MyString = Replace(MyString, " \par", "<br>")
-        MyString = Replace(MyString, Chr(134), "&#8224;") 'Single Dagger
-        MyString = Replace(MyString, Chr(135), "&#8225;") 'Double Dagger
-        MyString = Replace(MyString, "<", "&lt;")
-        MyString = Replace(MyString, ">", "&gt;")
-
+        MyString = Replace(MyString, "&lt;br&gt;", "<br>")
+        
         Return MyString  
 
     End Function
